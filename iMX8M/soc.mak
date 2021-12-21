@@ -36,6 +36,7 @@ VAL_BOARD = val
 QSPI_HEADER = ../scripts/fspi_header 0
 QSPI_PACKER = ../scripts/fspi_packer.sh
 VERSION = v1
+
 else ifeq ($(SOC),iMX8MN)
 PLAT = imx8mn
 HDMI = no
@@ -49,6 +50,7 @@ QSPI_HEADER = ../scripts/fspi_header
 QSPI_PACKER = ../scripts/fspi_packer.sh
 VERSION = v2
 DDR_FW_VERSION = _201810
+
 else ifeq ($(SOC),iMX8MP)
 PLAT = imx8mp
 HDMI = no
@@ -61,8 +63,10 @@ VAL_BOARD = val
 QSPI_HEADER = ../scripts/fspi_header
 QSPI_PACKER = ../scripts/fspi_packer.sh
 VERSION = v2
-LPDDR_FW_VERSION = _202006
-DDR_FW_VERSION = _202006
+LPDDR_FW_VERSION = _201904
+DDR_FW_VERSION = _201904
+DTB = atb-var-som.dtb
+
 else
 PLAT = imx8mq
 HDMI = yes
@@ -80,6 +84,7 @@ endif
 FW_DIR = imx-boot/imx-boot-tools/$(PLAT)
 
 $(MKIMG): mkimage_imx8.c
+	@echo "\n\nTARGET: $(MKIMG)\n\n"
 	@echo "PLAT="$(PLAT) "HDMI="$(HDMI)
 	@echo "Compiling mkimage_imx8"
 	$(CC) $(CFLAGS) mkimage_imx8.c -o $(MKIMG) -lz
@@ -90,6 +95,7 @@ lpddr4_imem_2d = lpddr4_pmu_train_2d_imem$(LPDDR_FW_VERSION).bin
 lpddr4_dmem_2d = lpddr4_pmu_train_2d_dmem$(LPDDR_FW_VERSION).bin
 
 u-boot-spl-ddr.bin: u-boot-spl.bin $(lpddr4_imem_1d) $(lpddr4_dmem_1d) $(lpddr4_imem_2d) $(lpddr4_dmem_2d)
+	@echo "\n\nTARGET: u-boot-spl-ddr.bin\n\n"
 	@objcopy -I binary -O binary --pad-to 0x8000 --gap-fill=0x0 $(lpddr4_imem_1d) lpddr4_pmu_train_1d_imem_pad.bin
 	@objcopy -I binary -O binary --pad-to 0x4000 --gap-fill=0x0 $(lpddr4_dmem_1d) lpddr4_pmu_train_1d_dmem_pad.bin
 	@objcopy -I binary -O binary --pad-to 0x8000 --gap-fill=0x0 $(lpddr4_imem_2d) lpddr4_pmu_train_2d_imem_pad.bin
@@ -105,6 +111,7 @@ ddr4_imem_2d = ddr4_imem_2d$(DDR_FW_VERSION).bin
 ddr4_dmem_2d = ddr4_dmem_2d$(DDR_FW_VERSION).bin
 
 u-boot-spl-ddr4.bin: u-boot-spl.bin $(ddr4_imem_1d) $(ddr4_dmem_1d) $(ddr4_imem_2d) $(ddr4_dmem_2d)
+	@echo "\n\nTARGET: u-boot-spl-ddr4.bin\n\n"
 	@objcopy -I binary -O binary --pad-to 0x8000 --gap-fill=0x0 $(ddr4_imem_1d) ddr4_imem_1d_pad.bin
 	@objcopy -I binary -O binary --pad-to 0x4000 --gap-fill=0x0 $(ddr4_dmem_1d) ddr4_dmem_1d_pad.bin
 	@objcopy -I binary -O binary --pad-to 0x8000 --gap-fill=0x0 $(ddr4_imem_2d) ddr4_imem_2d_pad.bin
@@ -125,10 +132,12 @@ u-boot-spl-ddr3l.bin: u-boot-spl.bin $(ddr3_imem_1d) $(ddr3_dmem_1d)
 	@rm -f u-boot-spl-pad.bin ddr3_pmu_train_fw.bin ddr3_imem_1d.bin_pad.bin
 
 u-boot-atf.bin: u-boot.bin bl31.bin
+	@echo "\n\nTARGET: u-boot-atf.bin\n\n"
 	@cp bl31.bin u-boot-atf.bin
 	@dd if=u-boot.bin of=u-boot-atf.bin bs=1K seek=128
 
 u-boot-atf-tee.bin: u-boot.bin bl31.bin tee.bin
+	@echo "\n\nTARGET: u-boot-atf-tee.bin\n\n"
 	@cp bl31.bin u-boot-atf-tee.bin
 	@dd if=tee.bin of=u-boot-atf-tee.bin bs=1K seek=128
 	@dd if=u-boot.bin of=u-boot-atf-tee.bin bs=1M seek=1
@@ -139,15 +148,23 @@ clean:
 
 dtbs = evk.dtb
 $(dtbs):
-	./$(DTB_PREPROC) $(PLAT)-evk.dtb $(dtbs)
+	@echo "\n\nTARGET: $(dtbs)\n\n"
+#	./$(DTB_PREPROC) $(PLAT)-evk.dtb $(dtbs)
+	./$(DTB_PREPROC) $(DTB) $(dtbs)
 
 u-boot.itb: $(dtbs)
+	@echo "\n\nTARGET: u-boot.itb\n\n"
 	./$(PAD_IMAGE) tee.bin
+	@echo "\n-----------\n"
 	./$(PAD_IMAGE) bl31.bin
+	@echo "\n-----------\n"
 	./$(PAD_IMAGE) u-boot-nodtb.bin $(dtbs)
+	@echo "\n-----------\n"
 	DEK_BLOB_LOAD_ADDR=$(DEK_BLOB_LOAD_ADDR) TEE_LOAD_ADDR=$(TEE_LOAD_ADDR) ATF_LOAD_ADDR=$(ATF_LOAD_ADDR) ./mkimage_fit_atf.sh $(dtbs) > u-boot.its
+	@echo "\n-----------\n"
 	./mkimage_uboot -E -p 0x3000 -f u-boot.its u-boot.itb
-	@rm -f u-boot.its $(dtbs)
+	@echo "\n-----------\n"
+	rm -f u-boot.its $(dtbs)
 
 dtbs_ddr3l = valddr3l.dtb
 $(dtbs_ddr3l):
@@ -233,6 +250,7 @@ flash_ddr4_val: flash_ddr4_val_no_hdmi
 endif
 
 flash_evk_no_hdmi: $(MKIMG) u-boot-spl-ddr.bin u-boot.itb
+	@echo "\n\nTARGET: flash_evk_no_hdmi\n\n"
 	./mkimage_imx8 -version $(VERSION) -fit -loader u-boot-spl-ddr.bin $(SPL_LOAD_ADDR) -second_loader u-boot.itb 0x40200000 0x60000 -out $(OUTIMG)
 
 flash_evk_no_hdmi_dual_bootloader: $(MKIMG) u-boot-spl-ddr.bin u-boot.itb
