@@ -1,0 +1,14 @@
+.cproject
+.project
+.settings/
+iMX8M/*.bin
+iMX8M/*.dtb
+iMX8M/*.dts
+iMX8M/mkimage_imx8
+iMX8M/mkimage_uboot
+iMX8M/u-boot-spl
+iMX8M/u-boot-spl-ddr.bin
+iMX8M/u-boot-spl.bin
+iMX8M/*.itb
+mkimage_imx8
+src/build_info.h

@@ -25,59 +25,59 @@ PRINT_FIT_HAB_OFFSET ?= 0x60000
 DEK_BLOB_LOAD_ADDR = 0x40400000
 
 ifeq ($(SOC),iMX8MM)
-PLAT = imx8mm
-HDMI = no
-SPL_LOAD_ADDR = 0x7E1000
-SPL_FSPI_LOAD_ADDR = 0x7E2000
-TEE_LOAD_ADDR ?= 0xbe000000
-ATF_LOAD_ADDR = 0x00920000
-VAL_BOARD = val
-#define the F(Q)SPI header file
-QSPI_HEADER = ../scripts/fspi_header 0
-QSPI_PACKER = ../scripts/fspi_packer.sh
-VERSION = v1
+	PLAT = imx8mm
+	HDMI = no
+	SPL_LOAD_ADDR = 0x7E1000
+	SPL_FSPI_LOAD_ADDR = 0x7E2000
+	TEE_LOAD_ADDR ?= 0xbe000000
+	ATF_LOAD_ADDR = 0x00920000
+	VAL_BOARD = val
+	#define the F(Q)SPI header file
+	QSPI_HEADER = ../scripts/fspi_header 0
+	QSPI_PACKER = ../scripts/fspi_packer.sh
+	VERSION = v1
 
 else ifeq ($(SOC),iMX8MN)
-PLAT = imx8mn
-HDMI = no
-SPL_LOAD_ADDR = 0x912000
-SPL_FSPI_LOAD_ADDR = 0x912000
-TEE_LOAD_ADDR = 0x56000000
-ATF_LOAD_ADDR = 0x00960000
-VAL_BOARD = val
-#define the F(Q)SPI header file
-QSPI_HEADER = ../scripts/fspi_header
-QSPI_PACKER = ../scripts/fspi_packer.sh
-VERSION = v2
-DDR_FW_VERSION = _201810
+	PLAT = imx8mn
+	HDMI = no
+	SPL_LOAD_ADDR = 0x912000
+	SPL_FSPI_LOAD_ADDR = 0x912000
+	TEE_LOAD_ADDR = 0x56000000
+	ATF_LOAD_ADDR = 0x00960000
+	VAL_BOARD = val
+	#define the F(Q)SPI header file
+	QSPI_HEADER = ../scripts/fspi_header
+	QSPI_PACKER = ../scripts/fspi_packer.sh
+	VERSION = v2
+	DDR_FW_VERSION = _201810
 
 else ifeq ($(SOC),iMX8MP)
-PLAT = imx8mp
-HDMI = no
-SPL_LOAD_ADDR = 0x920000
-SPL_FSPI_LOAD_ADDR = 0x920000
-TEE_LOAD_ADDR =  0x56000000
-ATF_LOAD_ADDR = 0x00970000
-VAL_BOARD = val
-#define the F(Q)SPI header file
-QSPI_HEADER = ../scripts/fspi_header
-QSPI_PACKER = ../scripts/fspi_packer.sh
-VERSION = v2
-#LPDDR_FW_VERSION = _201904
-#DDR_FW_VERSION = _201904
-DTB = atb-var-som.dtb
+	PLAT = imx8mp
+	HDMI = no
+	SPL_LOAD_ADDR = 0x920000
+	SPL_FSPI_LOAD_ADDR = 0x920000
+	TEE_LOAD_ADDR =  0x56000000
+	ATF_LOAD_ADDR = 0x00970000
+	VAL_BOARD = val
+	#define the F(Q)SPI header file
+	QSPI_HEADER = ../scripts/fspi_header
+	QSPI_PACKER = ../scripts/fspi_packer.sh
+	VERSION = v2
+	#LPDDR_FW_VERSION = _201904
+	#DDR_FW_VERSION = _201904
+	BOARD = $(PLAT)
 
 else
-PLAT = imx8mq
-HDMI = yes
-SPL_LOAD_ADDR = 0x7E1000
-TEE_LOAD_ADDR = 0xfe000000
-ATF_LOAD_ADDR = 0x00910000
-VAL_BOARD = val
-#define the F(Q)SPI header file
-QSPI_HEADER = ../scripts/qspi_header
-QSPI_PACKER = ../scripts/fspi_packer.sh
-VERSION = v1
+	PLAT = imx8mq
+	HDMI = yes
+	SPL_LOAD_ADDR = 0x7E1000
+	TEE_LOAD_ADDR = 0xfe000000
+	ATF_LOAD_ADDR = 0x00910000
+	VAL_BOARD = val
+	#define the F(Q)SPI header file
+	QSPI_HEADER = ../scripts/qspi_header
+	QSPI_PACKER = ../scripts/fspi_packer.sh
+	VERSION = v1
 endif
 
 
@@ -146,25 +146,24 @@ u-boot-atf-tee.bin: u-boot.bin bl31.bin tee.bin
 clean:
 	@rm -f $(MKIMG) u-boot-atf.bin u-boot-atf-tee.bin u-boot-spl-ddr.bin u-boot.itb u-boot.its u-boot-ddr3l.itb u-boot-ddr3l.its u-boot-spl-ddr3l.bin u-boot-ddr4.itb u-boot-ddr4.its u-boot-spl-ddr4.bin u-boot-ddr4-evk.itb u-boot-ivt.itb u-boot-ddr4-evk.its $(OUTIMG)
 
-dtbs = evk.dtb
-$(dtbs):
-	@echo "\n\nTARGET: $(dtbs)\n\n"
-#	./$(DTB_PREPROC) $(PLAT)-evk.dtb $(dtbs)
-	./$(DTB_PREPROC) $(DTB) $(dtbs)
+dtb = $(BOARD).dtb
+$(dtb):
+	@echo "\n\nTARGET: $(dtb)\n\n"
+	./$(DTB_PREPROC) $(dtb)
 
-u-boot.itb: $(dtbs)
+u-boot.itb: $(dtb)
 	@echo "\n\nTARGET: u-boot.itb\n\n"
 	./$(PAD_IMAGE) tee.bin
 	@echo "\n-----------\n"
 	./$(PAD_IMAGE) bl31.bin
 	@echo "\n-----------\n"
-	./$(PAD_IMAGE) u-boot-nodtb.bin $(dtbs)
+	./$(PAD_IMAGE) u-boot-nodtb.bin $(dtb)
 	@echo "\n-----------\n"
-	DEK_BLOB_LOAD_ADDR=$(DEK_BLOB_LOAD_ADDR) TEE_LOAD_ADDR=$(TEE_LOAD_ADDR) ATF_LOAD_ADDR=$(ATF_LOAD_ADDR) ./mkimage_fit_atf.sh $(dtbs) > u-boot.its
+	DEK_BLOB_LOAD_ADDR=$(DEK_BLOB_LOAD_ADDR) TEE_LOAD_ADDR=$(TEE_LOAD_ADDR) ATF_LOAD_ADDR=$(ATF_LOAD_ADDR) ./mkimage_fit_atf.sh $(dtb) > u-boot.its
 	@echo "\n-----------\n"
 	./mkimage_uboot -E -p 0x3000 -f u-boot.its u-boot.itb
 	@echo "\n-----------\n"
-	rm -f u-boot.its $(dtbs)
+	rm -f u-boot.its
 
 dtbs_ddr3l = valddr3l.dtb
 $(dtbs_ddr3l):
@@ -215,7 +214,7 @@ u-boot-ddr4-evk.itb: $(dtbs_ddr4_evk)
 	@rm -f u-boot.its $(dtbs_ddr4_evk)
 
 ifeq ($(HDMI),yes)
-flash_evk: $(MKIMG) signed_hdmi_imx8m.bin u-boot-spl-ddr.bin u-boot.itb
+flash_img: $(MKIMG) signed_hdmi_imx8m.bin u-boot-spl-ddr.bin u-boot.itb
 	./mkimage_imx8 -fit -signed_hdmi signed_hdmi_imx8m.bin -loader u-boot-spl-ddr.bin $(SPL_LOAD_ADDR) -second_loader u-boot.itb 0x40200000 0x60000 -out $(OUTIMG)
 
 flash_evk_dual_bootloader: $(MKIMG) signed_hdmi_imx8m.bin u-boot-spl-ddr.bin u-boot.itb
@@ -235,7 +234,7 @@ flash_ddr4_val: $(MKIMG) signed_hdmi_imx8m.bin u-boot-spl-ddr4.bin u-boot-ddr4.i
 	./mkimage_imx8 -fit -signed_hdmi signed_hdmi_imx8m.bin -loader u-boot-spl-ddr4.bin $(SPL_LOAD_ADDR) -second_loader u-boot-ddr4.itb 0x40200000 0x60000 -out $(OUTIMG)
 
 else
-flash_evk: flash_evk_no_hdmi
+flash_img: flash_evk_no_hdmi
 
 flash_evk_emmc_fastboot: flash_evk_no_hdmi_emmc_fastboot
 
@@ -288,18 +287,18 @@ flash_ddr4_evk_flexspi: $(MKIMG) u-boot-spl-ddr4.bin u-boot-ddr4-evk.itb
 	./mkimage_imx8 -version $(VERSION) -dev flexspi -fit -loader u-boot-spl-ddr4.bin $(SPL_FSPI_LOAD_ADDR) -second_loader u-boot-ddr4-evk.itb 0x40200000 0x60000 -out $(OUTIMG)
 	./$(QSPI_PACKER) $(QSPI_HEADER)
 
-flash_hdmi_spl_uboot: flash_evk
+flash_hdmi_spl_uboot: flash_img
 
 flash_dp_spl_uboot: flash_dp_evk
 
 flash_spl_uboot: flash_evk_no_hdmi
 
-print_fit_hab: u-boot-nodtb.bin bl31.bin $(dtbs)
+print_fit_hab: u-boot-nodtb.bin bl31.bin $(dtb)
 	./$(PAD_IMAGE) tee.bin
 	./$(PAD_IMAGE) bl31.bin
-	./$(PAD_IMAGE) u-boot-nodtb.bin $(dtbs)
-	TEE_LOAD_ADDR=$(TEE_LOAD_ADDR) ATF_LOAD_ADDR=$(ATF_LOAD_ADDR) VERSION=$(VERSION) ./print_fit_hab.sh $(PRINT_FIT_HAB_OFFSET) $(dtbs)
-	@rm -f $(dtbs)
+	./$(PAD_IMAGE) u-boot-nodtb.bin $(dtb)
+	TEE_LOAD_ADDR=$(TEE_LOAD_ADDR) ATF_LOAD_ADDR=$(ATF_LOAD_ADDR) VERSION=$(VERSION) ./print_fit_hab.sh $(PRINT_FIT_HAB_OFFSET) $(dtb)
+	@rm -f $(dtb)
 
 print_fit_hab_ddr4: u-boot-nodtb.bin bl31.bin $(dtbs_ddr4_evk)
 	./$(PAD_IMAGE) tee.bin
@@ -308,12 +307,12 @@ print_fit_hab_ddr4: u-boot-nodtb.bin bl31.bin $(dtbs_ddr4_evk)
 	TEE_LOAD_ADDR=$(TEE_LOAD_ADDR) ATF_LOAD_ADDR=$(ATF_LOAD_ADDR) VERSION=$(VERSION) ./print_fit_hab.sh $(PRINT_FIT_HAB_OFFSET) $(dtbs_ddr4_evk)
 	@rm -f $(dtbs_ddr4_evk)
 
-print_fit_hab_flexspi: u-boot-nodtb.bin bl31.bin $(dtbs)
+print_fit_hab_flexspi: u-boot-nodtb.bin bl31.bin $(dtb)
 	./$(PAD_IMAGE) tee.bin
 	./$(PAD_IMAGE) bl31.bin
-	./$(PAD_IMAGE) u-boot-nodtb.bin $(dtbs)
-	TEE_LOAD_ADDR=$(TEE_LOAD_ADDR) ATF_LOAD_ADDR=$(ATF_LOAD_ADDR) VERSION=$(VERSION) BOOT_DEV="flexspi" ./print_fit_hab.sh $(PRINT_FIT_HAB_OFFSET) $(dtbs)
-	@rm -f $(dtbs)
+	./$(PAD_IMAGE) u-boot-nodtb.bin $(dtb)
+	TEE_LOAD_ADDR=$(TEE_LOAD_ADDR) ATF_LOAD_ADDR=$(ATF_LOAD_ADDR) VERSION=$(VERSION) BOOT_DEV="flexspi" ./print_fit_hab.sh $(PRINT_FIT_HAB_OFFSET) $(dtb)
+	@rm -f $(dtb)
 
 nightly :
 	@echo "Pulling nightly for $(PLAT) evk board from $(SERVER)/$(DIR)"
